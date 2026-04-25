@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="el" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="eISO">
+<meta name="theme-color" content="#0f0f0f">
+<title>eISO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="eiso.css">
+</head>
+<body>
+
+<!-- ══ LOADING SCREEN ══ -->
+<div id="loadScreen">
+  <div class="load-logo">eISO</div>
+  <div class="load-tag" id="load-tag-txt">Βυζαντινός Ισοκράτης</div>
+  <div class="load-bar-wrap">
+    <div class="load-bar" id="loadBar"></div>
+  </div>
+  <div class="load-pct" id="loadPct">0%</div>
+</div>
+
+<!-- splash kept empty for JS compatibility -->
+<div id="splashScreen" style="display:none"></div>
+
+<!-- ══ MENU OVERLAY ══ -->
+<div id="menuOverlay" onclick="if(event.target===this)closeMenu()">
+<div class="drawer" onclick="event.stopPropagation()">
+  <div class="drawer-head">
+    <div class="d-logo">eISO</div>
+    <div class="d-ver">v1.0</div>
+  </div>
+  <div class="drawer-body">
+
+    <div class="ds open" id="ds-voices">
+      <div class="ds-hdr" onclick="toggleDS('voices')">
+        <div class="ds-htitle"><span class="ds-icon">♪</span><span id="dt-voices">Φωνές</span></div>
+        <span class="ds-arrow">▾</span>
+      </div>
+      <div class="ds-body">
+        <div id="drawerVoiceList"></div>
+        <!-- Set selection in menu -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div class="menu-set-btn set-btn" id="menuSetBtn_set5" onclick="selectPresetSet('set5')">
+            <div class="set-btn-bar"></div>
+            <span class="set-btn-num" style="font-size:28px">5</span>
+            <span class="set-btn-lbl menu-set-lbl">Φωνές</span>
+          </div>
+          <div class="menu-set-btn set-btn" id="menuSetBtn_set10" onclick="selectPresetSet('set10')">
+            <div class="set-btn-bar"></div>
+            <span class="set-btn-num" style="font-size:28px">10</span>
+            <span class="set-btn-lbl menu-set-lbl">Φωνές</span>
+          </div>
+        </div>
+        <button class="btn-dash" onclick="openAddVoice();closeMenu()">
+          <span>+</span><span id="dt-addvoice">Προσθήκη Φωνής</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ds" id="ds-diapason">
+      <div class="ds-hdr" onclick="toggleDS('diapason')">
+        <div class="ds-htitle"><span class="ds-icon">♩</span><span id="dt-diapason">Διαπασών</span></div>
+        <span class="ds-arrow">▾</span>
+      </div>
+      <div class="ds-body">
+        <div class="d-card" id="dCard" onclick="playDiapason()">
+          <svg class="fork-svg" viewBox="0 0 40 80" fill="none">
+            <line x1="14" y1="6" x2="14" y2="40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="26" y1="6" x2="26" y2="40" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M14 40 Q14 52 20 54 Q26 52 26 40" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <line x1="20" y1="54" x2="20" y2="68" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="20" cy="72" r="4" fill="currentColor"/>
+          </svg>
+          <div class="d-info">
+            <div class="d-hz" id="dt-dhz">Κε · 220.00 Hz</div>
+            <div class="d-sub" id="dt-dsub">Πάτα για ακρόαση 5″</div>
+          </div>
+          <div class="d-cnt" id="dCount"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds" id="ds-pitch">
+      <div class="ds-hdr" onclick="toggleDS('pitch')">
+        <div class="ds-htitle"><span class="ds-icon">◉</span><span id="dt-pitch">Ανιχνευτής Νότας</span></div>
+        <span class="ds-arrow">▾</span>
+      </div>
+      <div class="ds-body">
+        <div class="pd-card">
+          <div class="pd-note" id="pdNote">—</div>
+          <div class="pd-hz" id="pdHz">— Hz</div>
+          <div class="pd-cents" id="pdCents">—</div>
+          <div class="needle-wrap">
+            <div class="needle-ctr"></div>
+            <div class="needle" id="pdNeedle" style="left:50%"></div>
+          </div>
+          <button class="pd-btn" id="pdBtn" onclick="togglePitchDetector()">
+            ◉ <span id="pdBtnTxt">Έναρξη</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds" id="ds-layout">
+      <div class="ds-hdr" onclick="toggleDS('layout')">
+        <div class="ds-htitle"><span class="ds-icon">⊞</span><span id="dt-layout">Διάταξη</span></div>
+        <span class="ds-arrow">▾</span>
+      </div>
+      <div class="ds-body">
+        <div style="font-size:11px;color:var(--tx4);font-style:italic;margin-bottom:8px" id="dt-layoutsub">Σύρε για αλλαγή σειράς</div>
+        <div class="layout-grid" id="layoutGrid"></div>
+        <button class="btn-dash" onclick="resetLayout()" id="dt-resetlayout">↺ Επαναφορά</button>
+      </div>
+    </div>
+
+    <div class="ds-hdr ds-link" onclick="openSettingsModal()" style="border-bottom:1px solid var(--line);padding:15px 20px;cursor:pointer;transition:background 0.15s;display:flex;align-items:center;justify-content:space-between">
+      <div class="ds-htitle"><span class="ds-icon">⚙</span><span id="dt-settings">Ρυθμίσεις</span></div>
+      <span style="color:var(--tx4);font-size:12px">›</span>
+    </div>
+
+    <div class="ds" id="ds-about">
+      <div class="ds-hdr" onclick="toggleDS('about')">
+        <div class="ds-htitle"><span class="ds-icon">🔍</span><span id="dt-about">Πληροφορίες</span></div>
+        <span class="ds-arrow">▾</span>
+      </div>
+      <div class="ds-body">
+        <div class="about-logo">eISO</div>
+        <div class="about-sub" id="dt-aboutsub">Ψηφιακός Βυζαντινός Ισοκράτης</div>
+        <div class="about-txt" id="dt-abouttext">Ψηφιακός Βυζαντινός Ισοκράτης με τις φωνές μαθητών και καθηγητών του Ωδείου της Ιεράς Μητροπόλεως Φθιώτιδος «Γερμανός ο Μελωδός»</div>
+        <div class="about-ver">eISO · v1.0 · 2025</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══ ADD VOICE MODAL ══ -->
+<div class="modal-back" id="addVoiceModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <div class="modal-ttl" id="mv-title">Νέα Φωνή</div>
+      <button class="modal-x" onclick="closeAddVoice()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="flabel" id="mv-namelabel">Όνομα Φωνής</div>
+        <input type="text" class="finput" id="voiceNameInput" oninput="checkSaveReady()" maxlength="40">
+      </div>
+      <div>
+        <div class="flabel" id="mv-noteslabel">Φόρτωσε Φθόγγους</div>
+        <div class="notes-upload-grid" id="notesUploadGrid"></div>
+      </div>
+      <button class="btn-save" id="btnSave" onclick="saveVoice()" disabled>
+        <span id="mv-save">Αποθήκευση Φωνής</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MINI BAR — always visible ══ -->
+<div id="miniPlayer">
+  <div class="mini-bar">
+    <!-- Row 1: Pitch + Vol controls -->
+    <div style="display:flex;align-items:center;gap:0;justify-content:space-between">
+      <!-- Semitones -->
+      <div class="mb-pitch">
+        <button class="mb-pm" onpointerdown="startRepeat('semi',-1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">−</button>
+        <span class="mb-val" id="mbSemi">0</span>
+        <button class="mb-pm" onpointerdown="startRepeat('semi',1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">+</button>
+      </div>
+      <span class="mb-sep">|</span>
+      <!-- Moria -->
+      <div class="mb-pitch">
+        <button class="mb-pm" onpointerdown="startRepeat('moria',-1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">−</button>
+        <span class="mb-val" id="mbMoria">0</span>
+        <button class="mb-pm" onpointerdown="startRepeat('moria',1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">+</button>
+      </div>
+      <span class="mb-sep">|</span>
+      <!-- Volume -->
+      <div class="mb-pitch">
+        <button class="mb-pm" onclick="changeVol(-1)">−</button>
+        <span class="mb-val" id="mbVol">12</span>
+        <button class="mb-pm" onclick="changeVol(1)">+</button>
+      </div>
+    </div>
+    <!-- Row 2: Notes + expand -->
+    <div class="mb-bottom">
+      <div class="mb-notes" id="mbNotes"></div>
+      <button class="mb-expand" id="mbExpandBtn" onclick="toggleMinimize()">↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar" id="appTopbar">
+  <div class="tb-logo">eISO</div>
+  <div class="tb-center"></div>
+  <div class="tb-right">
+    <div class="icon-btn" onclick="minimizeApp()" title="Ελαχιστοποίηση">—</div>
+    <div class="icon-btn" onclick="exitApp()" title="Έξοδος">✕</div>
+    <div class="icon-btn" onclick="openMenu()" style="flex-direction:column;gap:4px">
+      <span style="width:14px;height:1.5px;background:var(--tx2);border-radius:1px;display:block"></span>
+      <span style="width:14px;height:1.5px;background:var(--tx2);border-radius:1px;display:block"></span>
+      <span style="width:14px;height:1.5px;background:var(--tx2);border-radius:1px;display:block"></span>
+    </div>
+  </div>
+</div>
+
+<div class="voice-bar" id="voiceBar"></div>
+
+<div id="mainScroll">
+  <div id="mainContent">
+    <div class="pitch-row">
+      <div class="pitch-card">
+        <div class="p-label" id="lbl-semi">Ημιτόνια</div>
+        <div class="p-ctrl">
+          <button class="pm m" onpointerdown="startRepeat('semi',-1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">−</button>
+          <div class="p-val" id="pvSemi" onclick="resetPitch('semi')">0</div>
+          <button class="pm p" onpointerdown="startRepeat('semi',1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">+</button>
+        </div>
+      </div>
+      <div class="pitch-card">
+        <div class="p-label" id="lbl-moria">Μόρια</div>
+        <div class="p-ctrl">
+          <button class="pm m" onpointerdown="startRepeat('moria',-1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">−</button>
+          <div class="p-val" id="pvMoria" onclick="resetPitch('moria')">0</div>
+          <button class="pm p" onpointerdown="startRepeat('moria',1)" onpointerup="stopRepeat()" onpointerleave="stopRepeat()">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="note-grid" id="noteGrid"></div>
+
+    <div class="vol-section">
+      <span class="vol-icon" id="volIcon" onclick="toggleMute()">🔊</span>
+      <input type="range" id="volSlider" min="1" max="15" value="12" oninput="setVol(this.value)">
+      <span class="vol-num" id="volVal">12</span>
+    </div>
+    <div class="ver-footer">v1</div>
+  </div>
+</div>
+
+<script src="eiso.audio.js"></script>
+<script src="eiso.app.js"></script>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div class="settings-back" id="settingsModal">
+  <div class="settings-panel">
+    <div class="sp-hdr">
+      <span class="sp-title" id="smt-title">⚙ Ρυθμίσεις</span>
+      <button class="sp-close" onclick="closeSettingsModal()">✕</button>
+    </div>
+    <div class="sp-body">
+
+      <!-- Voice Set -->
+      <div class="sp-section">
+        <div class="sp-sec-label" id="smt-voiceset">Σύνολο Φωνών</div>
+        <div class="sp-opts-row">
+          <div class="sp-opt set-opt" data-set="preset_5" onclick="pickVoiceSet('preset_5')">
+            <span class="sp-opt-num">5</span>
+            <span class="sp-opt-lbl" id="smt-v5">Φωνές</span>
+          </div>
+          <div class="sp-opt set-opt" data-set="preset_10" onclick="pickVoiceSet('preset_10')">
+            <span class="sp-opt-num">10</span>
+            <span class="sp-opt-lbl" id="smt-v10">Φωνές</span>
+          </div>
+          <div class="sp-opt set-opt" data-set="custom" onclick="openAddVoice();closeSettingsModal()">
+            <span class="sp-opt-num" style="font-size:22px">+</span>
+            <span class="sp-opt-lbl" id="smt-vcustom">Δική μου</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fade In -->
+      <div class="sp-section">
+        <div class="sp-sec-label" id="smt-fadein">Fade In</div>
+        <div class="sp-opts-row">
+          <div class="sp-opt" data-group="fadeInGroup" data-value="off" onclick="pickRadio('fadeInGroup','off')"><span id="smt-fi-off">Καθόλου</span></div>
+          <div class="sp-opt" data-group="fadeInGroup" data-value="small" onclick="pickRadio('fadeInGroup','small')"><span id="smt-fi-sm">Μικρό</span><span class="sp-opt-sub">0.3s</span></div>
+          <div class="sp-opt on" data-group="fadeInGroup" data-value="medium" onclick="pickRadio('fadeInGroup','medium')"><span id="smt-fi-md">Μεσαίο</span><span class="sp-opt-sub">0.8s</span></div>
+          <div class="sp-opt" data-group="fadeInGroup" data-value="large" onclick="pickRadio('fadeInGroup','large')"><span id="smt-fi-lg">Μεγάλο</span><span class="sp-opt-sub">2.0s</span></div>
+        </div>
+      </div>
+
+      <!-- Fade Out -->
+      <div class="sp-section">
+        <div class="sp-sec-label" id="smt-fadeout">Fade Out</div>
+        <div class="sp-opts-row">
+          <div class="sp-opt" data-group="fadeOutGroup" data-value="off" onclick="pickRadio('fadeOutGroup','off')"><span id="smt-fo-off">Καθόλου</span></div>
+          <div class="sp-opt" data-group="fadeOutGroup" data-value="small" onclick="pickRadio('fadeOutGroup','small')"><span id="smt-fo-sm">Μικρό</span><span class="sp-opt-sub">0.3s</span></div>
+          <div class="sp-opt on" data-group="fadeOutGroup" data-value="medium" onclick="pickRadio('fadeOutGroup','medium')"><span id="smt-fo-md">Μεσαίο</span><span class="sp-opt-sub">0.8s</span></div>
+          <div class="sp-opt" data-group="fadeOutGroup" data-value="large" onclick="pickRadio('fadeOutGroup','large')"><span id="smt-fo-lg">Μεγάλο</span><span class="sp-opt-sub">2.0s</span></div>
+        </div>
+      </div>
+
+      <!-- Synth -->
+      <div class="sp-section">
+        <div class="sp-sec-label" id="smt-synth">Συνθετικός Ήχος</div>
+        <div class="sp-desc" id="smt-synthdesc">Παίζει συνθετικό ισοκράτη όταν δεν υπάρχει φωνή φορτωμένη για τον φθόγγο</div>
+        <div class="sp-toggle-row">
+          <div class="toggle on" id="synthToggle" onclick="toggleSetting('synthToggle')"></div>
+        </div>
+      </div>
+
+      <!-- Theme -->
+      <div class="sp-section">
+        <div class="sp-sec-label" id="smt-theme">Θέμα</div>
+        <div class="sp-opts-row">
+          <div class="sp-opt theme-opt on" data-theme="dark" onclick="pickTheme('dark')">
+            <div class="sp-theme-dot" style="background:#0f0f0f;border-color:#3a3a3a"></div>
+            <span id="smt-th-dark">Σκοτεινό</span>
+          </div>
+          <div class="sp-opt theme-opt" data-theme="white" onclick="pickTheme('white')">
+            <div class="sp-theme-dot" style="background:#ffffff;border-color:#d0d0d0"></div>
+            <span id="smt-th-white">Λευκό</span>
+          </div>
+          <div class="sp-opt theme-opt" data-theme="gold" onclick="pickTheme('gold')">
+            <div class="sp-theme-dot" style="background:#1a1400;border-color:#c8a020"></div>
+            <span id="smt-th-gold">Χρυσό</span>
+          </div>
+          <div class="sp-opt theme-opt" data-theme="warm" onclick="pickTheme('warm')">
+            <div class="sp-theme-dot" style="background:#d0be98;border-color:#907860"></div>
+            <span id="smt-th-warm">Περγαμηνή</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="sp-section">
+        <div class="sp-sec-label" id="smt-lang">Γλώσσα</div>
+        <div class="sp-opts-row sp-lang-row">
+          <div class="sp-opt lang-opt on" data-lang="gr" onclick="pickLang('gr')">Ελληνικά</div>
+          <div class="sp-opt lang-opt" data-lang="en" onclick="pickLang('en')">English</div>
+          <div class="sp-opt lang-opt" data-lang="ro" onclick="pickLang('ro')">Română</div>
+          <div class="sp-opt lang-opt" data-lang="bg" onclick="pickLang('bg')">Български</div>
+          <div class="sp-opt lang-opt" data-lang="ru" onclick="pickLang('ru')">Русский</div>
+        </div>
+      </div>
+
+    </div><!-- sp-body -->
+
+    <!-- Save button -->
+    <div class="sp-footer">
+      <button class="sp-save-btn" onclick="saveAndCloseSettings()" id="smt-save">
+        ✓ Αποθήκευση Ρυθμίσεων
+      </button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
